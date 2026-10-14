@@ -11,7 +11,12 @@ from fastapi.testclient import TestClient
 
 from lab_result_integrity.api.app import sweep_review_sla_forever
 from lab_result_integrity.application.service import IntegrityService
-from lab_result_integrity.domain.errors import ConflictError, UnauthorizedError, UpstreamError
+from lab_result_integrity.domain.errors import (
+    ConflictError,
+    InvalidStateError,
+    UnauthorizedError,
+    UpstreamError,
+)
 from lab_result_integrity.domain.pbrtqc import PbrtqcState
 from lab_result_integrity.infrastructure.database import make_engine
 from lab_result_integrity.integrations.identity_fabric import IdentityFabricClient
@@ -142,9 +147,15 @@ async def test_concurrent_reviewers_cannot_both_decide(container: Container) -> 
         container.service.decide(OTHER_PATHOLOGIST, outcome.case_id, ReviewOutcome.CONFIRM, None),
         return_exceptions=True,
     )
+    # Whichever finishes second loses: a version conflict if the writes overlapped,
+    # "already decided" if they did not. Either way exactly one decision stands.
     errors = [r for r in results if isinstance(r, Exception)]
     assert len(errors) == 1
-    assert isinstance(errors[0], ConflictError)
+    assert isinstance(errors[0], ConflictError | InvalidStateError)
+    case = await container.service.case(PATHOLOGIST, outcome.case_id)
+    assert case.decision is not None
+    winner = next(r for r in results if not isinstance(r, Exception))
+    assert case.decision == winner.decision  # type: ignore[attr-defined]
 
 
 async def test_sla_sweeper_survives_failures(container: Container) -> None:
