@@ -1,0 +1,56 @@
+# Local development stack: lab-result-integrity + PostgreSQL + an OIDC provider
+# standing in for the enterprise IdP + an OTel collector. Runs the starter
+# analyte catalogue with synthetic data only (LRI_ALLOW_STARTER_CATALOGUE);
+# never use this configuration outside a developer workstation.
+name: lab-result-integrity
+
+services:
+  postgres:
+    image: postgres:16.4-alpine
+    environment:
+      POSTGRES_DB: lri
+      POSTGRES_USER: lri
+      POSTGRES_PASSWORD: lri-local-only
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lri -d lri"]
+      interval: 5s
+      retries: 10
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  oidc:
+    image: ghcr.io/navikt/mock-oauth2-server:2.1.10
+    environment:
+      SERVER_PORT: "8080"
+    ports:
+      - "8081:8080"
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.111.0
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./deployments/docker/otel-collector.yaml:/etc/otelcol/config.yaml:ro
+
+  lri:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+      oidc:
+        condition: service_started
+    ports:
+      - "8080:8080"
+    environment:
+      LRI_ENVIRONMENT: development
+      LRI_ALLOW_STARTER_CATALOGUE: "true"
+      LRI_PUBLIC_URL: http://localhost:8080
+      LRI_DATABASE_URL: postgresql+asyncpg://lri:lri-local-only@postgres:5432/lri
+      LRI_OIDC_ISSUER: http://oidc:8080/lab
+      LRI_OIDC_AUDIENCE: lab-result-integrity
+      LRI_OIDC_JWKS_URL: http://oidc:8080/lab/jwks
+      LRI_AUDIT_LOG_PATH: /var/lib/lab-result-integrity/audit/audit.jsonl
+      LRI_OTLP_ENDPOINT: http://otel-collector:4317
+      LRI_LOG_LEVEL: DEBUG
+
+volumes:
+  pgdata:

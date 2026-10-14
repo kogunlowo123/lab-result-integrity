@@ -1,0 +1,589 @@
+{
+  "$defs": {
+    "DataClassification": {
+      "description": "Sensitivity label. Ordered from least to most restricted.",
+      "enum": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "title": "DataClassification",
+      "type": "integer"
+    },
+    "Finding": {
+      "description": "A rule outcome with the evidence that produced it and the citation behind the rule.",
+      "properties": {
+        "citations": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "evidence": {
+          "additionalProperties": true,
+          "title": "Evidence",
+          "type": "object"
+        },
+        "kind": {
+          "$ref": "#/$defs/FindingKind"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "rule_id": {
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity"
+        }
+      },
+      "required": [
+        "kind",
+        "severity",
+        "rule_id",
+        "message"
+      ],
+      "title": "Finding",
+      "type": "object"
+    },
+    "FindingKind": {
+      "enum": [
+        "not_in_catalogue",
+        "unit_mismatch",
+        "reference_range",
+        "critical_value",
+        "plausibility_limit",
+        "delta_check",
+        "hil_interference",
+        "implausible_combination",
+        "pbrtqc_alarm"
+      ],
+      "title": "FindingKind",
+      "type": "string"
+    },
+    "Flag": {
+      "description": "Abnormal flags in HL7 v2 OBX-8 vocabulary.",
+      "enum": [
+        "N",
+        "L",
+        "H",
+        "LL",
+        "HH"
+      ],
+      "title": "Flag",
+      "type": "string"
+    },
+    "LabResult": {
+      "additionalProperties": false,
+      "description": "One numeric result as delivered by the LIS or instrument middleware.",
+      "properties": {
+        "accession": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:\\-]{0,127}$",
+          "title": "Accession",
+          "type": "string"
+        },
+        "analyte_code": {
+          "description": "LOINC code",
+          "pattern": "^[0-9]{1,7}-[0-9]$",
+          "title": "Analyte Code",
+          "type": "string"
+        },
+        "collected_at": {
+          "format": "date-time",
+          "title": "Collected At",
+          "type": "string"
+        },
+        "indices": {
+          "$ref": "#/$defs/SerumIndices"
+        },
+        "instrument_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:\\-]{0,127}$",
+          "title": "Instrument Id",
+          "type": "string"
+        },
+        "patient": {
+          "$ref": "#/$defs/Patient"
+        },
+        "result_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:\\-]{0,127}$",
+          "title": "Result Id",
+          "type": "string"
+        },
+        "resulted_at": {
+          "format": "date-time",
+          "title": "Resulted At",
+          "type": "string"
+        },
+        "specimen_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:\\-]{0,127}$",
+          "title": "Specimen Id",
+          "type": "string"
+        },
+        "unit": {
+          "maxLength": 32,
+          "minLength": 1,
+          "title": "Unit",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "result_id",
+        "accession",
+        "specimen_id",
+        "patient",
+        "analyte_code",
+        "value",
+        "unit",
+        "collected_at",
+        "resulted_at",
+        "instrument_id"
+      ],
+      "title": "LabResult",
+      "type": "object"
+    },
+    "Narrative": {
+      "properties": {
+        "advisory": {
+          "default": true,
+          "title": "Advisory",
+          "type": "boolean"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model"
+        },
+        "notes": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Notes",
+          "type": "array"
+        },
+        "provider": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider"
+        },
+        "status": {
+          "enum": [
+            "drafted",
+            "blocked",
+            "unavailable",
+            "disabled"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Text"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "title": "Narrative",
+      "type": "object"
+    },
+    "Patient": {
+      "additionalProperties": false,
+      "properties": {
+        "birth_date": {
+          "format": "date",
+          "title": "Birth Date",
+          "type": "string"
+        },
+        "patient_id": {
+          "description": "Pseudonymous patient key",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:\\-]{0,127}$",
+          "title": "Patient Id",
+          "type": "string"
+        },
+        "sex": {
+          "$ref": "#/$defs/Sex",
+          "default": "unknown"
+        }
+      },
+      "required": [
+        "patient_id",
+        "birth_date"
+      ],
+      "title": "Patient",
+      "type": "object"
+    },
+    "PriorResult": {
+      "properties": {
+        "collected_at": {
+          "format": "date-time",
+          "title": "Collected At",
+          "type": "string"
+        },
+        "result_id": {
+          "title": "Result Id",
+          "type": "string"
+        },
+        "specimen_id": {
+          "title": "Specimen Id",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "result_id",
+        "value",
+        "collected_at",
+        "specimen_id"
+      ],
+      "title": "PriorResult",
+      "type": "object"
+    },
+    "ProvenanceRecord": {
+      "description": "Where a piece of content came from and how far it can be trusted.",
+      "properties": {
+        "classification": {
+          "$ref": "#/$defs/DataClassification"
+        },
+        "digest": {
+          "description": "sha256 digest of the exact content used",
+          "title": "Digest",
+          "type": "string"
+        },
+        "parent_digests": {
+          "default": [],
+          "description": "Digests of inputs this content was derived from",
+          "items": {
+            "type": "string"
+          },
+          "title": "Parent Digests",
+          "type": "array"
+        },
+        "retrieved_at": {
+          "format": "date-time",
+          "title": "Retrieved At",
+          "type": "string"
+        },
+        "retrieved_by": {
+          "description": "Agent or service identity that fetched it",
+          "title": "Retrieved By",
+          "type": "string"
+        },
+        "source_type": {
+          "description": "e.g. fhir, document, tool, model, user",
+          "title": "Source Type",
+          "type": "string"
+        },
+        "source_uri": {
+          "description": "Canonical location of the source",
+          "title": "Source Uri",
+          "type": "string"
+        },
+        "trust": {
+          "$ref": "#/$defs/TrustLevel"
+        }
+      },
+      "required": [
+        "source_uri",
+        "source_type",
+        "digest",
+        "trust",
+        "classification",
+        "retrieved_by"
+      ],
+      "title": "ProvenanceRecord",
+      "type": "object"
+    },
+    "SerumIndices": {
+      "additionalProperties": false,
+      "description": "HIL indices as reported by the analyzer, in the analyzer's index units.",
+      "properties": {
+        "hemolysis": {
+          "anyOf": [
+            {
+              "maximum": 100000,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Hemolysis"
+        },
+        "icterus": {
+          "anyOf": [
+            {
+              "maximum": 100000,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Icterus"
+        },
+        "lipemia": {
+          "anyOf": [
+            {
+              "maximum": 100000,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lipemia"
+        }
+      },
+      "title": "SerumIndices",
+      "type": "object"
+    },
+    "Severity": {
+      "enum": [
+        "info",
+        "warning",
+        "high",
+        "critical"
+      ],
+      "title": "Severity",
+      "type": "string"
+    },
+    "Sex": {
+      "description": "Administrative sex used to select reference intervals (FHIR AdministrativeGender).",
+      "enum": [
+        "male",
+        "female",
+        "other",
+        "unknown"
+      ],
+      "title": "Sex",
+      "type": "string"
+    },
+    "TrendSummary": {
+      "description": "Least-squares trend over the patient's results inside the trend window.",
+      "properties": {
+        "direction": {
+          "title": "Direction",
+          "type": "string"
+        },
+        "first_value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "First Value"
+        },
+        "last_value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Last Value"
+        },
+        "points": {
+          "title": "Points",
+          "type": "integer"
+        },
+        "slope_per_day": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Slope Per Day"
+        },
+        "window_hours": {
+          "title": "Window Hours",
+          "type": "number"
+        }
+      },
+      "required": [
+        "points",
+        "window_hours",
+        "slope_per_day",
+        "first_value",
+        "last_value",
+        "direction"
+      ],
+      "title": "TrendSummary",
+      "type": "object"
+    },
+    "TrustLevel": {
+      "description": "Trust assigned to a piece of content based on its origin.\n\nSYSTEM content is authored by the platform operator. VERIFIED content\ncomes from an authenticated, integrity-checked source. USER content is\nsupplied by an authenticated principal. EXTERNAL content (web pages,\nretrieved documents, tool output) is never trusted to carry instructions.",
+      "enum": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "title": "TrustLevel",
+      "type": "integer"
+    }
+  },
+  "$id": "https://github.com/kogunlowo123/lab-result-integrity/schemas/evidence-packet.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "assembled_at": {
+      "format": "date-time",
+      "title": "Assembled At",
+      "type": "string"
+    },
+    "assembled_by": {
+      "title": "Assembled By",
+      "type": "string"
+    },
+    "catalogue": {
+      "additionalProperties": true,
+      "title": "Catalogue",
+      "type": "object"
+    },
+    "citations": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Citations",
+      "type": "object"
+    },
+    "findings": {
+      "items": {
+        "$ref": "#/$defs/Finding"
+      },
+      "title": "Findings",
+      "type": "array"
+    },
+    "flag": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Flag"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "highest_severity": {
+      "$ref": "#/$defs/Severity"
+    },
+    "narrative": {
+      "$ref": "#/$defs/Narrative"
+    },
+    "packet_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Packet Version",
+      "type": "string"
+    },
+    "patient_based_qc": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Patient Based Qc"
+    },
+    "prior_results": {
+      "items": {
+        "$ref": "#/$defs/PriorResult"
+      },
+      "title": "Prior Results",
+      "type": "array"
+    },
+    "provenance": {
+      "$ref": "#/$defs/ProvenanceRecord"
+    },
+    "result": {
+      "$ref": "#/$defs/LabResult"
+    },
+    "specimen_results": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Specimen Results",
+      "type": "array"
+    },
+    "trend": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TrendSummary"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "assembled_by",
+    "assembled_at",
+    "result",
+    "flag",
+    "findings",
+    "highest_severity",
+    "prior_results",
+    "trend",
+    "specimen_results",
+    "patient_based_qc",
+    "catalogue",
+    "citations",
+    "provenance",
+    "narrative"
+  ],
+  "title": "EvidencePacket",
+  "type": "object"
+}

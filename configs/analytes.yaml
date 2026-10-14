@@ -1,0 +1,240 @@
+# Analyte catalogue for lab-result-integrity.
+#
+# STATUS: starter. This file ships so the service, its tests and the local
+# compose stack run with synthetic data. The numbers below are typical adult
+# values of the kind found in textbooks and manufacturer inserts, chosen to make
+# the rules exercise realistically; they are NOT clinical guidance and are NOT
+# authoritative for any laboratory. Every value must be replaced or verified by
+# the laboratory against its own methods, instruments and population before
+# use, and the catalogue re-issued with governance.status: approved
+# (approved_by, approved_on). The service refuses a starter catalogue in
+# production (LRI_ALLOW_STARTER_CATALOGUE is rejected when
+# LRI_ENVIRONMENT=production).
+#
+# Units: catalogue units are the only units rules are evaluated in. A result
+# reported in another unit is held with a unit_mismatch finding.
+# HIL thresholds are in the analyzer's own index units, which differ between
+# vendors; take them from the assay instructions for use (CLSI C56).
+governance:
+  catalogue_id: lab-result-integrity-starter
+  version: "2026.10.0-starter"
+  status: starter
+  statement: >-
+    Starter values for synthetic-data operation only. Replace with
+    laboratory-director approved values (42 CFR 493.1253, 493.1291) before
+    clinical use.
+
+sources:
+  cfr-493-1253: >-
+    42 CFR 493.1253 - Standard: Establishment and verification of performance
+    specifications (verification that reference intervals are appropriate for
+    the laboratory's patient population).
+  cfr-493-1291: >-
+    42 CFR 493.1291 - Standard: Test report (paragraph (g): immediate
+    notification of results indicating imminently life-threatening conditions,
+    i.e. panic or alert values).
+  clsi-ep28: >-
+    CLSI EP28-A3c. Defining, Establishing, and Verifying Reference Intervals in
+    the Clinical Laboratory. Clinical and Laboratory Standards Institute.
+  clsi-gp47: >-
+    CLSI GP47. Management of Critical- and Significant-Risk Results. Clinical
+    and Laboratory Standards Institute.
+  clsi-ep33: >-
+    CLSI EP33. Use of Delta Checks in the Medical Laboratory. Clinical and
+    Laboratory Standards Institute.
+  clsi-c56: >-
+    CLSI C56-A. Hemolysis, Icterus, and Lipemia/Turbidity Indices as Indicators
+    of Interference in Clinical Laboratory Analysis. Clinical and Laboratory
+    Standards Institute.
+  clsi-ep07: >-
+    CLSI EP07. Interference Testing in Clinical Chemistry. Clinical and
+    Laboratory Standards Institute.
+  assay-ifu: >-
+    Assay manufacturer instructions for use. HIL interference claims are
+    reagent-, method- and analyzer-specific and must be taken from the insert
+    for the method in use.
+  badrick-2019: >-
+    Badrick T, Bietenbeck A, Cervinski MA, Katayev A, van Rossum HH, Loh TP.
+    Patient-Based Real-Time Quality Control: Review and Recommendations.
+    Clin Chem. 2019;65(8):962-971.
+  edta-contamination: >-
+    Published case series on K2EDTA carry-over into serum/plasma tubes, which
+    presents as spuriously high potassium with low calcium (EDTA chelates
+    calcium and magnesium). Confirm locally with the laboratory's own data.
+  lab-policy: >-
+    Laboratory policy set by the laboratory director (starter value in this
+    file; replace with the approved local value).
+
+review_policy:
+  cite: [lab-policy, clsi-gp47]
+  sla_minutes:
+    stat: 30
+    urgent: 120
+    routine: 480
+  prior_results_in_evidence: 10
+
+analytes:
+  - code: 2823-3
+    name: Potassium
+    unit: mmol/L
+    reference_intervals:
+      - {sex: any, age_min_days: 0, age_max_days: 31, low: 3.7, high: 5.9, cite: [clsi-ep28, cfr-493-1253]}
+      - {sex: any, age_min_days: 31, low: 3.5, high: 5.1, cite: [clsi-ep28, cfr-493-1253]}
+    critical: {low: 2.8, high: 6.2, cite: [clsi-gp47, cfr-493-1291, lab-policy]}
+    plausible: {min: 1.0, max: 12.0, cite: [lab-policy]}
+    delta: {window_hours: 48, absolute: 1.0, cite: [clsi-ep33, lab-policy]}
+    interference:
+      - {index: hemolysis, threshold: 50, bias: increase, action: flag, cite: [clsi-c56, assay-ifu]}
+      - {index: hemolysis, threshold: 200, bias: increase, action: withhold, cite: [clsi-c56, assay-ifu]}
+    pbrtqc:
+      method: sma
+      block_size: 20
+      truncation_low: 3.0
+      truncation_high: 5.5
+      target: 4.2
+      control_limit: 0.25
+      cite: [badrick-2019, lab-policy]
+
+  - code: 2951-2
+    name: Sodium
+    unit: mmol/L
+    reference_intervals:
+      - {sex: any, low: 136, high: 145, cite: [clsi-ep28, cfr-493-1253]}
+    critical: {low: 120, high: 160, cite: [clsi-gp47, cfr-493-1291, lab-policy]}
+    plausible: {min: 80, max: 200, cite: [lab-policy]}
+    delta: {window_hours: 48, absolute: 8, cite: [clsi-ep33, lab-policy]}
+    interference:
+      - {index: lipemia, threshold: 1000, bias: decrease, action: flag, cite: [clsi-c56, assay-ifu]}
+    pbrtqc:
+      method: ewma
+      block_size: 30
+      ewma_lambda: 0.1
+      truncation_low: 130
+      truncation_high: 150
+      target: 140
+      control_limit: 2.0
+      cite: [badrick-2019, lab-policy]
+
+  - code: 17861-6
+    name: Calcium
+    unit: mg/dL
+    reference_intervals:
+      - {sex: any, low: 8.6, high: 10.3, cite: [clsi-ep28, cfr-493-1253]}
+    critical: {low: 6.0, high: 13.0, cite: [clsi-gp47, cfr-493-1291, lab-policy]}
+    plausible: {min: 2.0, max: 20.0, cite: [lab-policy]}
+    delta: {window_hours: 48, absolute: 1.5, cite: [clsi-ep33, lab-policy]}
+
+  - code: 2345-7
+    name: Glucose
+    unit: mg/dL
+    reference_intervals:
+      - {sex: any, low: 70, high: 99, cite: [clsi-ep28, cfr-493-1253]}
+    critical: {low: 40, high: 500, cite: [clsi-gp47, cfr-493-1291, lab-policy]}
+    plausible: {min: 5, max: 3000, cite: [lab-policy]}
+    delta: {window_hours: 24, absolute: 100, percent: 50, mode: all, cite: [clsi-ep33, lab-policy]}
+
+  - code: 2160-0
+    name: Creatinine
+    unit: mg/dL
+    reference_intervals:
+      - {sex: male, age_min_days: 6570, low: 0.74, high: 1.35, cite: [clsi-ep28, cfr-493-1253]}
+      - {sex: female, age_min_days: 6570, low: 0.59, high: 1.04, cite: [clsi-ep28, cfr-493-1253]}
+    plausible: {min: 0.05, max: 30, cite: [lab-policy]}
+    delta: {window_hours: 48, absolute: 0.3, percent: 50, mode: any, cite: [clsi-ep33, lab-policy]}
+    interference:
+      - {index: icterus, threshold: 10, bias: decrease, action: flag, cite: [clsi-c56, assay-ifu]}
+
+  - code: 718-7
+    name: Hemoglobin
+    unit: g/dL
+    reference_intervals:
+      - {sex: male, age_min_days: 6570, low: 13.2, high: 16.6, cite: [clsi-ep28, cfr-493-1253]}
+      - {sex: female, age_min_days: 6570, low: 11.6, high: 15.0, cite: [clsi-ep28, cfr-493-1253]}
+    critical: {low: 6.0, high: 20.0, cite: [clsi-gp47, cfr-493-1291, lab-policy]}
+    plausible: {min: 1.0, max: 25.0, cite: [lab-policy]}
+    delta: {window_hours: 24, absolute: 2.0, cite: [clsi-ep33, lab-policy]}
+    interference:
+      - {index: lipemia, threshold: 1000, bias: increase, action: flag, cite: [clsi-c56, assay-ifu]}
+
+  - code: 777-3
+    name: Platelets
+    unit: 10*3/uL
+    reference_intervals:
+      - {sex: any, low: 150, high: 400, cite: [clsi-ep28, cfr-493-1253]}
+    critical: {low: 20, high: 1000, cite: [clsi-gp47, cfr-493-1291, lab-policy]}
+    plausible: {min: 1, max: 3000, cite: [lab-policy]}
+    delta: {window_hours: 72, percent: 50, cite: [clsi-ep33, lab-policy]}
+
+  - code: 1920-8
+    name: Aspartate aminotransferase
+    unit: U/L
+    reference_intervals:
+      - {sex: male, low: 8, high: 48, cite: [clsi-ep28, cfr-493-1253]}
+      - {sex: female, low: 8, high: 43, cite: [clsi-ep28, cfr-493-1253]}
+    plausible: {min: 1, max: 20000, cite: [lab-policy]}
+    interference:
+      - {index: hemolysis, threshold: 40, bias: increase, action: flag, cite: [clsi-c56, assay-ifu]}
+
+  - code: 2532-0
+    name: Lactate dehydrogenase
+    unit: U/L
+    reference_intervals:
+      - {sex: any, low: 122, high: 222, cite: [clsi-ep28, cfr-493-1253]}
+    plausible: {min: 10, max: 50000, cite: [lab-policy]}
+    interference:
+      - {index: hemolysis, threshold: 15, bias: increase, action: withhold, cite: [clsi-c56, assay-ifu]}
+
+  - code: 2777-1
+    name: Phosphate
+    unit: mg/dL
+    reference_intervals:
+      - {sex: any, low: 2.5, high: 4.5, cite: [clsi-ep28, cfr-493-1253]}
+    plausible: {min: 0.2, max: 20, cite: [lab-policy]}
+    interference:
+      - {index: hemolysis, threshold: 100, bias: increase, action: flag, cite: [clsi-c56, assay-ifu]}
+
+  - code: 19123-9
+    name: Magnesium
+    unit: mg/dL
+    reference_intervals:
+      - {sex: any, low: 1.7, high: 2.3, cite: [clsi-ep28, cfr-493-1253]}
+    critical: {low: 1.0, high: 4.9, cite: [clsi-gp47, cfr-493-1291, lab-policy]}
+    plausible: {min: 0.2, max: 15, cite: [lab-policy]}
+
+combination_rules:
+  - id: hemolysis-pseudohyperkalemia
+    description: Potassium above the reference interval in a visibly hemolysed specimen
+    suspected_cause: in vitro hemolysis releasing intracellular potassium
+    severity: high
+    conditions:
+      - {analyte: 2823-3, op: gt, value: 5.1}
+      - {index: hemolysis, op: gte, value: 50}
+    cite: [clsi-c56, assay-ifu]
+
+  - id: k2edta-contamination
+    description: High potassium with low calcium in the same specimen
+    suspected_cause: K2EDTA carry-over contamination of the specimen
+    severity: critical
+    conditions:
+      - {analyte: 2823-3, op: gte, value: 6.0}
+      - {analyte: 17861-6, op: lte, value: 7.0}
+    cite: [edta-contamination, lab-policy]
+
+  - id: delayed-separation
+    description: High potassium and phosphate with low glucose in the same specimen
+    suspected_cause: delayed separation or prolonged contact of serum with cells
+    severity: high
+    conditions:
+      - {analyte: 2823-3, op: gt, value: 5.1}
+      - {analyte: 2777-1, op: gt, value: 4.5}
+      - {analyte: 2345-7, op: lt, value: 60}
+    cite: [lab-policy]
+
+  - id: dextrose-infusion-contamination
+    description: Markedly high glucose with low sodium in the same specimen
+    suspected_cause: specimen drawn above or through a dextrose infusion line
+    severity: high
+    conditions:
+      - {analyte: 2345-7, op: gte, value: 1000}
+      - {analyte: 2951-2, op: lte, value: 130}
+    cite: [lab-policy]

@@ -1,0 +1,34 @@
+{
+  "$defs": {
+    "ReviewOutcome": {
+      "enum": [
+        "confirm",
+        "confirm_with_comment",
+        "request_recollection",
+        "cancel_result"
+      ],
+      "title": "ReviewOutcome",
+      "type": "string"
+    }
+  },
+  "$id": "https://github.com/kogunlowo123/lab-result-integrity/schemas/proposal.request.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "outcome": {
+      "$ref": "#/$defs/ReviewOutcome"
+    },
+    "rationale": {
+      "maxLength": 4000,
+      "minLength": 1,
+      "title": "Rationale",
+      "type": "string"
+    }
+  },
+  "required": [
+    "outcome",
+    "rationale"
+  ],
+  "title": "ProposalRequest",
+  "type": "object"
+}

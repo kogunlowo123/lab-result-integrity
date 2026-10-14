@@ -1,0 +1,184 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v10.3.0
+        with:
+          enable-cache: true
+      - run: uv sync --frozen --python ${{ matrix.python }}
+      - name: Lint and format
+        run: |
+          uv run ruff check src tests
+          uv run black --check src tests
+      - name: Type check
+        run: uv run mypy
+      - name: Static security analysis
+        run: uv run python -m bandit -q -r src -c pyproject.toml
+      - name: Published contracts are current
+        run: uv run python -m lab_result_integrity.contracts --check
+      - name: Unit, security, chaos, performance and e2e tests (coverage gate 90%)
+        run: uv run pytest --cov-report=xml
+      - uses: actions/upload-artifact@v4
+        if: matrix.python == '3.12'
+        with:
+          name: coverage
+          path: coverage.xml
+
+  integration-postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16.4-alpine
+        env:
+          POSTGRES_DB: lri
+          POSTGRES_USER: lri
+          POSTGRES_PASSWORD: ci-only
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U lri" --health-interval 5s --health-retries 10
+    env:
+      LRI_TEST_DATABASE_URL: postgresql+asyncpg://lri:ci-only@localhost:5432/lri
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v10.3.0
+      - run: uv sync --frozen
+      - run: uv run pytest tests/integration -m integration --no-cov -ra
+
+  deploy-artifacts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.16.2
+      - name: Helm lint and render
+        run: |
+          helm lint deployments/helm/lab-result-integrity \
+            -f deployments/helm/lab-result-integrity/ci/test-values.yaml
+          helm template lri deployments/helm/lab-result-integrity \
+            -f deployments/helm/lab-result-integrity/ci/test-values.yaml > rendered.yaml
+          if helm template lri deployments/helm/lab-result-integrity > /dev/null 2>&1; then
+            echo "chart rendered without required values"; exit 1
+          fi
+      - name: Kubernetes schema validation (kubeconform)
+        run: |
+          curl -sSfL https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz | tar xz
+          ./kubeconform -strict -summary -ignore-missing-schemas \
+            -schema-location default \
+            -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+            rendered.yaml deployments/kubernetes/namespace.yaml deployments/kubernetes/external-secrets.yaml
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+      - name: Terraform fmt and validate (aws, azure, gcp)
+        run: |
+          terraform fmt -recursive -check deployments/terraform
+          for cloud in aws azure gcp; do
+            terraform -chdir=deployments/terraform/$cloud init -backend=false -input=false
+            terraform -chdir=deployments/terraform/$cloud validate
+          done
+      - name: IaC and Kubernetes misconfiguration scan (Trivy)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: config
+          scan-ref: deployments
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t lab-result-integrity:ci .
+      - name: Container smoke test (starts, reports healthy, enforces auth)
+        env:
+          LRI_PUBLIC_URL: http://localhost:8080
+          LRI_DATABASE_URL: sqlite+aiosqlite:////tmp/lri.db
+          LRI_OIDC_ISSUER: https://login.ci.internal/lab
+          LRI_OIDC_AUDIENCE: lab-result-integrity
+          LRI_OIDC_JWKS_URL: https://login.ci.internal/lab/jwks
+        run: |
+          docker run -d --name lri -p 8080:8080 \
+            -e LRI_ENVIRONMENT=ci -e LRI_ALLOW_STARTER_CATALOGUE=true \
+            -e LRI_PUBLIC_URL -e LRI_DATABASE_URL -e LRI_AUDIT_LOG_PATH=/tmp/audit.jsonl \
+            -e LRI_OIDC_ISSUER -e LRI_OIDC_AUDIENCE -e LRI_OIDC_JWKS_URL \
+            lab-result-integrity:ci
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8080/readyz && break; sleep 1
+          done
+          curl -sf http://localhost:8080/readyz
+          curl -sf http://localhost:8080/.well-known/agent-card.json | grep -q '"name":"lab-result-integrity"'
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/v1/review-queue)" = 401
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:8080/mcp)" = 401
+          docker inspect --format '{{.Config.User}}' lab-result-integrity:ci | grep -q 10001
+          docker logs lri
+      - name: Production refuses the starter catalogue
+        env:
+          LRI_PUBLIC_URL: https://lri.ci.internal
+          LRI_DATABASE_URL: sqlite+aiosqlite:////tmp/lri.db
+          LRI_OIDC_ISSUER: https://login.ci.internal/lab
+          LRI_OIDC_AUDIENCE: lab-result-integrity
+          LRI_OIDC_JWKS_URL: https://login.ci.internal/lab/jwks
+        run: |
+          set +e
+          docker run --rm \
+            -e LRI_ENVIRONMENT=production -e LRI_AUDIT_KEY_FILE=/tmp/audit-unused.pem \
+            -e LRI_PUBLIC_URL -e LRI_DATABASE_URL \
+            -e LRI_OIDC_ISSUER -e LRI_OIDC_AUDIENCE -e LRI_OIDC_JWKS_URL \
+            lab-result-integrity:ci > refusal.log 2>&1
+          status=$?
+          set -e
+          cat refusal.log
+          test "$status" -ne 0
+          grep -q "catalogue status is 'starter'" refusal.log
+      - name: Image vulnerability scan (Trivy)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: lab-result-integrity:ci
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+      - name: Image SBOM (Syft)
+        uses: anchore/sbom-action@v0.24.3
+        with:
+          image: lab-result-integrity:ci
+          format: cyclonedx-json
+          output-file: sbom.cdx.json
+      - name: SBOM vulnerability gate (Grype)
+        uses: anchore/scan-action@v7.4.2
+        with:
+          sbom: sbom.cdx.json
+          fail-build: true
+          severity-cutoff: high
+          only-fixed: true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.cdx.json
+
+  semgrep:
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep:1.95.0
+    steps:
+      - uses: actions/checkout@v4
+      - run: semgrep scan --config p/python --config p/secrets --config p/dockerfile --error --metrics=off src Dockerfile

@@ -1,0 +1,83 @@
+# PrometheusRule-compatible alert rules. Load with the Prometheus Operator
+# (wrap in a PrometheusRule) or a rule_files entry.
+# SLOs (docs/architecture/agent-specification.md):
+#   availability   99.9% of screening and review requests succeed (non-5xx)
+#   latency        p95 POST /v1/screenings < 1 s for batches up to 50 results
+#   review SLA     no undecided case past its catalogue SLA for more than 15 min
+groups:
+  - name: lab-result-integrity.slo
+    rules:
+      - record: lri:request_errors:ratio_5m
+        expr: |
+          sum(rate(lri_http_request_duration_seconds_count{status=~"5.."}[5m]))
+          /
+          clamp_min(sum(rate(lri_http_request_duration_seconds_count[5m])), 1e-9)
+
+      - record: lri:hold_rate:ratio_1h
+        expr: |
+          sum(rate(lri_results_screened_total{disposition="held_for_review"}[1h]))
+          /
+          clamp_min(sum(rate(lri_results_screened_total[1h])), 1e-9)
+
+      - alert: LriErrorBudgetBurnFast
+        expr: lri:request_errors:ratio_5m > (14.4 * 0.001)
+        for: 5m
+        labels: {severity: page}
+        annotations:
+          summary: lab-result-integrity burning error budget 14x faster than sustainable
+          runbook: docs/runbooks/incident-response.md#elevated-5xx
+
+      - alert: LriScreeningLatencyHigh
+        expr: |
+          histogram_quantile(0.95, sum by (le) (
+            rate(lri_http_request_duration_seconds_bucket{route="/v1/screenings"}[5m])
+          )) > 1
+        for: 10m
+        labels: {severity: ticket}
+        annotations:
+          summary: p95 POST /v1/screenings above 1 s
+          runbook: docs/runbooks/monitoring.md#latency
+
+  - name: lab-result-integrity.laboratory
+    rules:
+      - alert: LriReviewCasesOverdue
+        expr: lri_review_cases_overdue > 0
+        for: 15m
+        labels: {severity: page}
+        annotations:
+          summary: Held results are waiting past their pathologist review SLA
+          runbook: docs/runbooks/review-sla-breach.md
+
+      - alert: LriPatientBasedQcAlarm
+        expr: increase(lri_pbrtqc_alarms_total[10m]) > 0
+        labels: {severity: page}
+        annotations:
+          summary: Patient-based QC alarm for {{ $labels.analyte }}; results from the instrument are being held
+          runbook: docs/runbooks/pbrtqc-alarm.md
+
+      - alert: LriHoldRateAnomalous
+        expr: lri:hold_rate:ratio_1h > 0.25
+        for: 30m
+        labels: {severity: ticket}
+        annotations:
+          summary: More than a quarter of screened results are being held; check catalogue changes and instruments
+          runbook: docs/runbooks/monitoring.md#hold-rate
+
+      - alert: LriAuthorizationDenialsSpike
+        expr: sum(rate(lri_authorization_decisions_total{decision="deny"}[5m])) > 1
+        for: 10m
+        labels: {severity: ticket}
+        annotations:
+          summary: Sustained authorization denials; possible misconfigured agent or probing
+          runbook: docs/runbooks/incident-response.md#authorization-denials
+
+      - alert: LriNarrativeUnavailable
+        expr: |
+          sum(rate(lri_evidence_narratives_total{status=~"unavailable|blocked"}[30m]))
+          /
+          clamp_min(sum(rate(lri_evidence_narratives_total{status!="disabled"}[30m])), 1e-9) > 0.5
+        for: 30m
+        labels: {severity: ticket}
+        annotations:
+          summary: Most evidence narratives are failing; screening is unaffected
+          runbook: docs/runbooks/monitoring.md#narratives

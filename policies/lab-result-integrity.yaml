@@ -1,0 +1,87 @@
+# Authorization policy for lab-result-integrity, evaluated by the agentic-core
+# PolicyEngine for every REST, MCP and A2A action.
+# Combining: deny overrides, then require_approval, then allow; default deny.
+#
+# Subject facts: kind (user | agent), roles (OIDC roles claim), scopes,
+# action_in_scope (true when an agent credential carries the action as a scope,
+# exactly or via a trailing wildcard such as cases:*), via (oidc | fabric).
+#
+# The service refuses to start if this policy would let an agent release,
+# autoverify, claim or decide a result (see runtime/container.py).
+name: lab-result-integrity
+version: "2026.10.0"
+rules:
+  - id: deny-release-from-this-service
+    description: >-
+      Results are released by the LIS under the laboratory's validated
+      autoverification rules or by a human. No caller may release or
+      autoverify through this service.
+    effect: deny
+    actions: ["result:release", "result:autoverify", "result:verify"]
+
+  - id: deny-agent-review-actions
+    description: Only humans claim and decide pathologist review cases.
+    effect: deny
+    actions: ["review:claim", "review:decide", "review:override"]
+    conditions:
+      - {attribute: subject.kind, operator: eq, value: agent}
+
+  - id: approve-agent-proposals
+    description: >-
+      An agent may propose a disposition; a pathologist must accept it, so the
+      proposal is recorded as pending human approval.
+    effect: require_approval
+    actions: ["review:propose"]
+    conditions:
+      - {attribute: subject.kind, operator: eq, value: agent}
+      - {attribute: subject.action_in_scope, operator: eq, value: true}
+
+  - id: allow-agent-scoped-actions
+    description: Agents may screen and read when their credential carries the scope.
+    effect: allow
+    actions: ["results:screen", "results:read", "cases:read", "qc:read", "catalogue:read"]
+    conditions:
+      - {attribute: subject.kind, operator: eq, value: agent}
+      - {attribute: subject.action_in_scope, operator: eq, value: true}
+
+  - id: allow-staff-screening
+    description: Technologists and the laboratory director may submit results for screening.
+    effect: allow
+    actions: ["results:screen"]
+    conditions:
+      - {attribute: subject.kind, operator: eq, value: user}
+      - {attribute: subject.roles, operator: contains_any, value: [technologist, lab_director]}
+
+  - id: allow-staff-reads
+    description: Laboratory staff and auditors may read results, cases, QC status and the catalogue.
+    effect: allow
+    actions: ["results:read", "cases:read", "qc:read", "catalogue:read"]
+    conditions:
+      - {attribute: subject.kind, operator: eq, value: user}
+      - attribute: subject.roles
+        operator: contains_any
+        value: [pathologist, lab_director, technologist, auditor]
+
+  - id: allow-pathologist-review
+    description: Pathologists and the laboratory director claim and decide review cases.
+    effect: allow
+    actions: ["review:claim", "review:decide"]
+    conditions:
+      - {attribute: subject.kind, operator: eq, value: user}
+      - {attribute: subject.roles, operator: contains_any, value: [pathologist, lab_director]}
+
+  - id: allow-director-override
+    description: The laboratory director may take over a case claimed by another reviewer.
+    effect: allow
+    actions: ["review:override"]
+    conditions:
+      - {attribute: subject.kind, operator: eq, value: user}
+      - {attribute: subject.roles, operator: contains, value: lab_director}
+
+  - id: allow-audit-verification
+    description: Auditors and the laboratory director may verify the audit chain.
+    effect: allow
+    actions: ["audit:verify"]
+    conditions:
+      - {attribute: subject.kind, operator: eq, value: user}
+      - {attribute: subject.roles, operator: contains_any, value: [auditor, lab_director]}

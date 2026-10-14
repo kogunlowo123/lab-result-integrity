@@ -1,0 +1,182 @@
+{
+  "$defs": {
+    "LabResult": {
+      "additionalProperties": false,
+      "description": "One numeric result as delivered by the LIS or instrument middleware.",
+      "properties": {
+        "accession": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:\\-]{0,127}$",
+          "title": "Accession",
+          "type": "string"
+        },
+        "analyte_code": {
+          "description": "LOINC code",
+          "pattern": "^[0-9]{1,7}-[0-9]$",
+          "title": "Analyte Code",
+          "type": "string"
+        },
+        "collected_at": {
+          "format": "date-time",
+          "title": "Collected At",
+          "type": "string"
+        },
+        "indices": {
+          "$ref": "#/$defs/SerumIndices"
+        },
+        "instrument_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:\\-]{0,127}$",
+          "title": "Instrument Id",
+          "type": "string"
+        },
+        "patient": {
+          "$ref": "#/$defs/Patient"
+        },
+        "result_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:\\-]{0,127}$",
+          "title": "Result Id",
+          "type": "string"
+        },
+        "resulted_at": {
+          "format": "date-time",
+          "title": "Resulted At",
+          "type": "string"
+        },
+        "specimen_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:\\-]{0,127}$",
+          "title": "Specimen Id",
+          "type": "string"
+        },
+        "unit": {
+          "maxLength": 32,
+          "minLength": 1,
+          "title": "Unit",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "result_id",
+        "accession",
+        "specimen_id",
+        "patient",
+        "analyte_code",
+        "value",
+        "unit",
+        "collected_at",
+        "resulted_at",
+        "instrument_id"
+      ],
+      "title": "LabResult",
+      "type": "object"
+    },
+    "Patient": {
+      "additionalProperties": false,
+      "properties": {
+        "birth_date": {
+          "format": "date",
+          "title": "Birth Date",
+          "type": "string"
+        },
+        "patient_id": {
+          "description": "Pseudonymous patient key",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:\\-]{0,127}$",
+          "title": "Patient Id",
+          "type": "string"
+        },
+        "sex": {
+          "$ref": "#/$defs/Sex",
+          "default": "unknown"
+        }
+      },
+      "required": [
+        "patient_id",
+        "birth_date"
+      ],
+      "title": "Patient",
+      "type": "object"
+    },
+    "SerumIndices": {
+      "additionalProperties": false,
+      "description": "HIL indices as reported by the analyzer, in the analyzer's index units.",
+      "properties": {
+        "hemolysis": {
+          "anyOf": [
+            {
+              "maximum": 100000,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Hemolysis"
+        },
+        "icterus": {
+          "anyOf": [
+            {
+              "maximum": 100000,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Icterus"
+        },
+        "lipemia": {
+          "anyOf": [
+            {
+              "maximum": 100000,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lipemia"
+        }
+      },
+      "title": "SerumIndices",
+      "type": "object"
+    },
+    "Sex": {
+      "description": "Administrative sex used to select reference intervals (FHIR AdministrativeGender).",
+      "enum": [
+        "male",
+        "female",
+        "other",
+        "unknown"
+      ],
+      "title": "Sex",
+      "type": "string"
+    }
+  },
+  "$id": "https://github.com/kogunlowo123/lab-result-integrity/schemas/screen.request.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "results": {
+      "items": {
+        "$ref": "#/$defs/LabResult"
+      },
+      "maxItems": 5000,
+      "minItems": 1,
+      "title": "Results",
+      "type": "array"
+    }
+  },
+  "required": [
+    "results"
+  ],
+  "title": "ScreenRequest",
+  "type": "object"
+}

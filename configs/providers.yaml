@@ -1,0 +1,19 @@
+# Model providers for the optional evidence narrative (agentic-core ModelRouter).
+# Enabled only when LRI_PROVIDERS_FILE points at this file. Values written as
+# ${NAME} are resolved from the environment at start-up and fail closed when
+# unset. The narrative request is de-identified and classified CONFIDENTIAL;
+# a provider must be approved for that classification to be eligible.
+#
+# The primary deployment (GCP) points at the enterprise model gateway in the
+# cluster, which fronts Vertex AI with workload identity, so no model
+# credential is held by this service.
+providers:
+  - kind: openai_compatible
+    base_url: ${LRI_MODEL_GATEWAY_URL}
+    auth: none
+    timeout_s: 20
+    profile:
+      name: enterprise-model-gateway
+      model: ${LRI_NARRATIVE_MODEL}
+      max_classification: 2
+      tasks: [summarize]

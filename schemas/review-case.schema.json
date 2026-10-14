@@ -1,0 +1,320 @@
+{
+  "$defs": {
+    "CaseStatus": {
+      "enum": [
+        "open",
+        "claimed",
+        "decided"
+      ],
+      "title": "CaseStatus",
+      "type": "string"
+    },
+    "Decision": {
+      "properties": {
+        "comment": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Comment"
+        },
+        "decided_at": {
+          "format": "date-time",
+          "title": "Decided At",
+          "type": "string"
+        },
+        "decided_by": {
+          "title": "Decided By",
+          "type": "string"
+        },
+        "outcome": {
+          "$ref": "#/$defs/ReviewOutcome"
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRecord"
+        }
+      },
+      "required": [
+        "outcome",
+        "comment",
+        "decided_by",
+        "decided_at",
+        "policy"
+      ],
+      "title": "Decision",
+      "type": "object"
+    },
+    "Finding": {
+      "description": "A rule outcome with the evidence that produced it and the citation behind the rule.",
+      "properties": {
+        "citations": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "evidence": {
+          "additionalProperties": true,
+          "title": "Evidence",
+          "type": "object"
+        },
+        "kind": {
+          "$ref": "#/$defs/FindingKind"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "rule_id": {
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity"
+        }
+      },
+      "required": [
+        "kind",
+        "severity",
+        "rule_id",
+        "message"
+      ],
+      "title": "Finding",
+      "type": "object"
+    },
+    "FindingKind": {
+      "enum": [
+        "not_in_catalogue",
+        "unit_mismatch",
+        "reference_range",
+        "critical_value",
+        "plausibility_limit",
+        "delta_check",
+        "hil_interference",
+        "implausible_combination",
+        "pbrtqc_alarm"
+      ],
+      "title": "FindingKind",
+      "type": "string"
+    },
+    "PolicyRecord": {
+      "description": "The policy decision that permitted a state change, kept with the record.",
+      "properties": {
+        "decision": {
+          "title": "Decision",
+          "type": "string"
+        },
+        "matched_rules": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Matched Rules",
+          "type": "array"
+        },
+        "policy_digest": {
+          "title": "Policy Digest",
+          "type": "string"
+        },
+        "policy_version": {
+          "title": "Policy Version",
+          "type": "string"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "decision",
+        "matched_rules",
+        "policy_version",
+        "policy_digest",
+        "source"
+      ],
+      "title": "PolicyRecord",
+      "type": "object"
+    },
+    "Priority": {
+      "description": "Review priority; ``rank`` orders the pathologist queue.",
+      "enum": [
+        "stat",
+        "urgent",
+        "routine"
+      ],
+      "title": "Priority",
+      "type": "string"
+    },
+    "Proposal": {
+      "properties": {
+        "outcome": {
+          "$ref": "#/$defs/ReviewOutcome"
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRecord"
+        },
+        "proposed_at": {
+          "format": "date-time",
+          "title": "Proposed At",
+          "type": "string"
+        },
+        "proposed_by": {
+          "title": "Proposed By",
+          "type": "string"
+        },
+        "rationale": {
+          "title": "Rationale",
+          "type": "string"
+        },
+        "status": {
+          "default": "pending_human_approval",
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "proposed_by",
+        "outcome",
+        "rationale",
+        "proposed_at",
+        "policy"
+      ],
+      "title": "Proposal",
+      "type": "object"
+    },
+    "ReviewOutcome": {
+      "enum": [
+        "confirm",
+        "confirm_with_comment",
+        "request_recollection",
+        "cancel_result"
+      ],
+      "title": "ReviewOutcome",
+      "type": "string"
+    },
+    "Severity": {
+      "enum": [
+        "info",
+        "warning",
+        "high",
+        "critical"
+      ],
+      "title": "Severity",
+      "type": "string"
+    }
+  },
+  "$id": "https://github.com/kogunlowo123/lab-result-integrity/schemas/review-case.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "analyte_code": {
+      "title": "Analyte Code",
+      "type": "string"
+    },
+    "assigned_to": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Assigned To"
+    },
+    "case_id": {
+      "title": "Case Id",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "decision": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Decision"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "due_at": {
+      "format": "date-time",
+      "title": "Due At",
+      "type": "string"
+    },
+    "escalated": {
+      "default": false,
+      "title": "Escalated",
+      "type": "boolean"
+    },
+    "evidence": {
+      "additionalProperties": true,
+      "description": "Evidence packet assembled at screening",
+      "title": "Evidence",
+      "type": "object"
+    },
+    "evidence_digest": {
+      "title": "Evidence Digest",
+      "type": "string"
+    },
+    "findings": {
+      "items": {
+        "$ref": "#/$defs/Finding"
+      },
+      "title": "Findings",
+      "type": "array"
+    },
+    "patient_id": {
+      "title": "Patient Id",
+      "type": "string"
+    },
+    "priority": {
+      "$ref": "#/$defs/Priority"
+    },
+    "proposals": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Proposal"
+      },
+      "title": "Proposals",
+      "type": "array"
+    },
+    "result_id": {
+      "title": "Result Id",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/CaseStatus",
+      "default": "open"
+    },
+    "version": {
+      "default": 0,
+      "title": "Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "case_id",
+    "result_id",
+    "patient_id",
+    "analyte_code",
+    "priority",
+    "created_at",
+    "due_at",
+    "findings",
+    "evidence",
+    "evidence_digest"
+  ],
+  "title": "ReviewCase",
+  "type": "object"
+}

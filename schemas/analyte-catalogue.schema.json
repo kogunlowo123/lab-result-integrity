@@ -1,0 +1,694 @@
+{
+  "$defs": {
+    "AnalyteSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "pattern": "^[0-9]{1,7}-[0-9]$",
+          "title": "Code",
+          "type": "string"
+        },
+        "critical": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CriticalLimits"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "delta": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DeltaRule"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "interference": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/HilRule"
+          },
+          "title": "Interference",
+          "type": "array"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "pbrtqc": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PbrtqcConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "plausible": {
+          "$ref": "#/$defs/PlausibleRange"
+        },
+        "reference_intervals": {
+          "items": {
+            "$ref": "#/$defs/ReferenceInterval"
+          },
+          "minItems": 1,
+          "title": "Reference Intervals",
+          "type": "array"
+        },
+        "trend_window_hours": {
+          "default": 168,
+          "exclusiveMinimum": 0,
+          "title": "Trend Window Hours",
+          "type": "number"
+        },
+        "unit": {
+          "title": "Unit",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "name",
+        "unit",
+        "reference_intervals",
+        "plausible"
+      ],
+      "title": "AnalyteSpec",
+      "type": "object"
+    },
+    "Bias": {
+      "enum": [
+        "increase",
+        "decrease",
+        "unpredictable"
+      ],
+      "title": "Bias",
+      "type": "string"
+    },
+    "CombinationRule": {
+      "additionalProperties": false,
+      "description": "Physiologically implausible combination within one specimen.",
+      "properties": {
+        "cite": {
+          "description": "Citation ids from `sources`",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Cite",
+          "type": "array"
+        },
+        "conditions": {
+          "items": {
+            "$ref": "#/$defs/Condition"
+          },
+          "minItems": 2,
+          "title": "Conditions",
+          "type": "array"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "id": {
+          "pattern": "^[a-z0-9][a-z0-9\\-]{1,63}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "severity": {
+          "default": "high",
+          "enum": [
+            "warning",
+            "high",
+            "critical"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "suspected_cause": {
+          "title": "Suspected Cause",
+          "type": "string"
+        }
+      },
+      "required": [
+        "cite",
+        "id",
+        "description",
+        "suspected_cause",
+        "conditions"
+      ],
+      "title": "CombinationRule",
+      "type": "object"
+    },
+    "Condition": {
+      "additionalProperties": false,
+      "description": "One clause of a combination rule: an analyte value or a serum index.",
+      "properties": {
+        "analyte": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9]{1,7}-[0-9]$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Analyte"
+        },
+        "index": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HilIndex"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "op": {
+          "$ref": "#/$defs/Operator"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "op",
+        "value"
+      ],
+      "title": "Condition",
+      "type": "object"
+    },
+    "CriticalLimits": {
+      "additionalProperties": false,
+      "properties": {
+        "cite": {
+          "description": "Citation ids from `sources`",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Cite",
+          "type": "array"
+        },
+        "high": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "High"
+        },
+        "low": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Low"
+        }
+      },
+      "required": [
+        "cite"
+      ],
+      "title": "CriticalLimits",
+      "type": "object"
+    },
+    "DeltaRule": {
+      "additionalProperties": false,
+      "properties": {
+        "absolute": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Absolute"
+        },
+        "cite": {
+          "description": "Citation ids from `sources`",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Cite",
+          "type": "array"
+        },
+        "mode": {
+          "default": "any",
+          "description": "any: either limit triggers; all: both must be exceeded",
+          "enum": [
+            "any",
+            "all"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "percent": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Percent"
+        },
+        "window_hours": {
+          "exclusiveMinimum": 0,
+          "maximum": 8760,
+          "title": "Window Hours",
+          "type": "number"
+        }
+      },
+      "required": [
+        "cite",
+        "window_hours"
+      ],
+      "title": "DeltaRule",
+      "type": "object"
+    },
+    "Governance": {
+      "additionalProperties": false,
+      "properties": {
+        "approved_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Approved By"
+        },
+        "approved_on": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Approved On"
+        },
+        "catalogue_id": {
+          "title": "Catalogue Id",
+          "type": "string"
+        },
+        "statement": {
+          "title": "Statement",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "starter",
+            "approved",
+            "retired"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "catalogue_id",
+        "version",
+        "status",
+        "statement"
+      ],
+      "title": "Governance",
+      "type": "object"
+    },
+    "HilAction": {
+      "enum": [
+        "flag",
+        "withhold"
+      ],
+      "title": "HilAction",
+      "type": "string"
+    },
+    "HilIndex": {
+      "description": "Serum indices reported by the analyzer (CLSI C56).",
+      "enum": [
+        "hemolysis",
+        "icterus",
+        "lipemia"
+      ],
+      "title": "HilIndex",
+      "type": "string"
+    },
+    "HilRule": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "$ref": "#/$defs/HilAction"
+        },
+        "bias": {
+          "$ref": "#/$defs/Bias"
+        },
+        "cite": {
+          "description": "Citation ids from `sources`",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Cite",
+          "type": "array"
+        },
+        "index": {
+          "$ref": "#/$defs/HilIndex"
+        },
+        "threshold": {
+          "description": "Index value at or above which the rule fires",
+          "exclusiveMinimum": 0,
+          "title": "Threshold",
+          "type": "number"
+        }
+      },
+      "required": [
+        "cite",
+        "index",
+        "threshold",
+        "bias",
+        "action"
+      ],
+      "title": "HilRule",
+      "type": "object"
+    },
+    "Operator": {
+      "enum": [
+        "gt",
+        "gte",
+        "lt",
+        "lte"
+      ],
+      "title": "Operator",
+      "type": "string"
+    },
+    "PbrtqcConfig": {
+      "additionalProperties": false,
+      "description": "Patient-based real-time QC (moving average) parameters per analyte and instrument.",
+      "properties": {
+        "block_size": {
+          "description": "SMA window / EWMA warm-up length",
+          "maximum": 1000,
+          "minimum": 2,
+          "title": "Block Size",
+          "type": "integer"
+        },
+        "cite": {
+          "description": "Citation ids from `sources`",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Cite",
+          "type": "array"
+        },
+        "control_limit": {
+          "description": "Alarm when |statistic - target| exceeds this",
+          "exclusiveMinimum": 0,
+          "title": "Control Limit",
+          "type": "number"
+        },
+        "ewma_lambda": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 1,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ewma Lambda"
+        },
+        "method": {
+          "enum": [
+            "sma",
+            "ewma"
+          ],
+          "title": "Method",
+          "type": "string"
+        },
+        "target": {
+          "title": "Target",
+          "type": "number"
+        },
+        "truncation_high": {
+          "title": "Truncation High",
+          "type": "number"
+        },
+        "truncation_low": {
+          "title": "Truncation Low",
+          "type": "number"
+        }
+      },
+      "required": [
+        "cite",
+        "method",
+        "block_size",
+        "truncation_low",
+        "truncation_high",
+        "target",
+        "control_limit"
+      ],
+      "title": "PbrtqcConfig",
+      "type": "object"
+    },
+    "PlausibleRange": {
+      "additionalProperties": false,
+      "description": "Values outside this range are treated as analytical or pre-analytical error.",
+      "properties": {
+        "cite": {
+          "description": "Citation ids from `sources`",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Cite",
+          "type": "array"
+        },
+        "max": {
+          "title": "Max",
+          "type": "number"
+        },
+        "min": {
+          "title": "Min",
+          "type": "number"
+        }
+      },
+      "required": [
+        "cite",
+        "min",
+        "max"
+      ],
+      "title": "PlausibleRange",
+      "type": "object"
+    },
+    "Priority": {
+      "description": "Review priority; ``rank`` orders the pathologist queue.",
+      "enum": [
+        "stat",
+        "urgent",
+        "routine"
+      ],
+      "title": "Priority",
+      "type": "string"
+    },
+    "ReferenceInterval": {
+      "additionalProperties": false,
+      "properties": {
+        "age_max_days": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Exclusive upper bound",
+          "title": "Age Max Days"
+        },
+        "age_min_days": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Age Min Days",
+          "type": "integer"
+        },
+        "cite": {
+          "description": "Citation ids from `sources`",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Cite",
+          "type": "array"
+        },
+        "high": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "High"
+        },
+        "low": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Low"
+        },
+        "sex": {
+          "default": "any",
+          "enum": [
+            "any",
+            "male",
+            "female"
+          ],
+          "title": "Sex",
+          "type": "string"
+        }
+      },
+      "required": [
+        "cite"
+      ],
+      "title": "ReferenceInterval",
+      "type": "object"
+    },
+    "ReviewPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "cite": {
+          "description": "Citation ids from `sources`",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Cite",
+          "type": "array"
+        },
+        "prior_results_in_evidence": {
+          "default": 10,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Prior Results In Evidence",
+          "type": "integer"
+        },
+        "sla_minutes": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "description": "Time to pathologist decision",
+          "propertyNames": {
+            "$ref": "#/$defs/Priority"
+          },
+          "title": "Sla Minutes",
+          "type": "object"
+        }
+      },
+      "required": [
+        "cite",
+        "sla_minutes"
+      ],
+      "title": "ReviewPolicy",
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/kogunlowo123/lab-result-integrity/schemas/analyte-catalogue.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "analytes": {
+      "items": {
+        "$ref": "#/$defs/AnalyteSpec"
+      },
+      "minItems": 1,
+      "title": "Analytes",
+      "type": "array"
+    },
+    "combination_rules": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/CombinationRule"
+      },
+      "title": "Combination Rules",
+      "type": "array"
+    },
+    "governance": {
+      "$ref": "#/$defs/Governance"
+    },
+    "review_policy": {
+      "$ref": "#/$defs/ReviewPolicy"
+    },
+    "sources": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Citation id -> full reference",
+      "minProperties": 1,
+      "title": "Sources",
+      "type": "object"
+    }
+  },
+  "required": [
+    "governance",
+    "sources",
+    "review_policy",
+    "analytes"
+  ],
+  "title": "AnalyteCatalogue",
+  "type": "object"
+}

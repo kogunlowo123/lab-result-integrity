@@ -1,0 +1,1930 @@
+{
+  "components": {
+    "schemas": {
+      "AuditVerification": {
+        "properties": {
+          "events": {
+            "title": "Events",
+            "type": "integer"
+          },
+          "failed_sequence": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failed Sequence"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "verified",
+          "events"
+        ],
+        "title": "AuditVerification",
+        "type": "object"
+      },
+      "CaseStatus": {
+        "enum": [
+          "open",
+          "claimed",
+          "decided"
+        ],
+        "title": "CaseStatus",
+        "type": "string"
+      },
+      "CaseSummary": {
+        "properties": {
+          "analyte_code": {
+            "title": "Analyte Code",
+            "type": "string"
+          },
+          "assigned_to": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned To"
+          },
+          "case_id": {
+            "title": "Case Id",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "due_at": {
+            "title": "Due At",
+            "type": "string"
+          },
+          "escalated": {
+            "title": "Escalated",
+            "type": "boolean"
+          },
+          "finding_kinds": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Finding Kinds",
+            "type": "array"
+          },
+          "overdue": {
+            "title": "Overdue",
+            "type": "boolean"
+          },
+          "pending_proposals": {
+            "title": "Pending Proposals",
+            "type": "integer"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/Priority"
+          },
+          "result_id": {
+            "title": "Result Id",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CaseStatus"
+          }
+        },
+        "required": [
+          "case_id",
+          "result_id",
+          "analyte_code",
+          "priority",
+          "status",
+          "created_at",
+          "due_at",
+          "overdue",
+          "escalated",
+          "assigned_to",
+          "finding_kinds",
+          "pending_proposals"
+        ],
+        "title": "CaseSummary",
+        "type": "object"
+      },
+      "Decision": {
+        "properties": {
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          },
+          "decided_at": {
+            "format": "date-time",
+            "title": "Decided At",
+            "type": "string"
+          },
+          "decided_by": {
+            "title": "Decided By",
+            "type": "string"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/ReviewOutcome"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/PolicyRecord"
+          }
+        },
+        "required": [
+          "outcome",
+          "comment",
+          "decided_by",
+          "decided_at",
+          "policy"
+        ],
+        "title": "Decision",
+        "type": "object"
+      },
+      "DecisionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "comment": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/ReviewOutcome"
+          }
+        },
+        "required": [
+          "outcome"
+        ],
+        "title": "DecisionRequest",
+        "type": "object"
+      },
+      "Disposition": {
+        "description": "What screening concluded. Neither value releases the result.\n\n``screened_no_findings`` tells the LIS that no integrity rule fired; release\nstays with the laboratory's own validated autoverification rules or a\nhuman. ``held_for_review`` places the result in the pathologist queue.",
+        "enum": [
+          "screened_no_findings",
+          "held_for_review"
+        ],
+        "title": "Disposition",
+        "type": "string"
+      },
+      "Finding": {
+        "description": "A rule outcome with the evidence that produced it and the citation behind the rule.",
+        "properties": {
+          "citations": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Citations",
+            "type": "array"
+          },
+          "evidence": {
+            "additionalProperties": true,
+            "title": "Evidence",
+            "type": "object"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/FindingKind"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "rule_id": {
+            "title": "Rule Id",
+            "type": "string"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/Severity"
+          }
+        },
+        "required": [
+          "kind",
+          "severity",
+          "rule_id",
+          "message"
+        ],
+        "title": "Finding",
+        "type": "object"
+      },
+      "FindingKind": {
+        "enum": [
+          "not_in_catalogue",
+          "unit_mismatch",
+          "reference_range",
+          "critical_value",
+          "plausibility_limit",
+          "delta_check",
+          "hil_interference",
+          "implausible_combination",
+          "pbrtqc_alarm"
+        ],
+        "title": "FindingKind",
+        "type": "string"
+      },
+      "Flag": {
+        "description": "Abnormal flags in HL7 v2 OBX-8 vocabulary.",
+        "enum": [
+          "N",
+          "L",
+          "H",
+          "LL",
+          "HH"
+        ],
+        "title": "Flag",
+        "type": "string"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "LabResult": {
+        "additionalProperties": false,
+        "description": "One numeric result as delivered by the LIS or instrument middleware.",
+        "properties": {
+          "accession": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:\\-]{0,127}$",
+            "title": "Accession",
+            "type": "string"
+          },
+          "analyte_code": {
+            "description": "LOINC code",
+            "pattern": "^[0-9]{1,7}-[0-9]$",
+            "title": "Analyte Code",
+            "type": "string"
+          },
+          "collected_at": {
+            "format": "date-time",
+            "title": "Collected At",
+            "type": "string"
+          },
+          "indices": {
+            "$ref": "#/components/schemas/SerumIndices"
+          },
+          "instrument_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:\\-]{0,127}$",
+            "title": "Instrument Id",
+            "type": "string"
+          },
+          "patient": {
+            "$ref": "#/components/schemas/Patient"
+          },
+          "result_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:\\-]{0,127}$",
+            "title": "Result Id",
+            "type": "string"
+          },
+          "resulted_at": {
+            "format": "date-time",
+            "title": "Resulted At",
+            "type": "string"
+          },
+          "specimen_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:\\-]{0,127}$",
+            "title": "Specimen Id",
+            "type": "string"
+          },
+          "unit": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Unit",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "result_id",
+          "accession",
+          "specimen_id",
+          "patient",
+          "analyte_code",
+          "value",
+          "unit",
+          "collected_at",
+          "resulted_at",
+          "instrument_id"
+        ],
+        "title": "LabResult",
+        "type": "object"
+      },
+      "Patient": {
+        "additionalProperties": false,
+        "properties": {
+          "birth_date": {
+            "format": "date",
+            "title": "Birth Date",
+            "type": "string"
+          },
+          "patient_id": {
+            "description": "Pseudonymous patient key",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:\\-]{0,127}$",
+            "title": "Patient Id",
+            "type": "string"
+          },
+          "sex": {
+            "$ref": "#/components/schemas/Sex",
+            "default": "unknown"
+          }
+        },
+        "required": [
+          "patient_id",
+          "birth_date"
+        ],
+        "title": "Patient",
+        "type": "object"
+      },
+      "PatientTrend": {
+        "properties": {
+          "analyte_code": {
+            "title": "Analyte Code",
+            "type": "string"
+          },
+          "patient_id": {
+            "title": "Patient Id",
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/PriorResult"
+            },
+            "title": "Results",
+            "type": "array"
+          },
+          "trend": {
+            "$ref": "#/components/schemas/TrendSummary"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "patient_id",
+          "analyte_code",
+          "unit",
+          "results",
+          "trend"
+        ],
+        "title": "PatientTrend",
+        "type": "object"
+      },
+      "PbrtqcResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PbrtqcState"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "PbrtqcResponse",
+        "type": "object"
+      },
+      "PbrtqcState": {
+        "properties": {
+          "accepted": {
+            "default": 0,
+            "title": "Accepted",
+            "type": "integer"
+          },
+          "affected_result_ids": {
+            "default": [],
+            "description": "Window contents when the current alarm started",
+            "items": {
+              "type": "string"
+            },
+            "title": "Affected Result Ids",
+            "type": "array"
+          },
+          "alarms": {
+            "default": 0,
+            "title": "Alarms",
+            "type": "integer"
+          },
+          "analyte_code": {
+            "title": "Analyte Code",
+            "type": "string"
+          },
+          "config_digest": {
+            "title": "Config Digest",
+            "type": "string"
+          },
+          "ewma": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ewma"
+          },
+          "excluded": {
+            "default": 0,
+            "title": "Excluded",
+            "type": "integer"
+          },
+          "in_control": {
+            "default": true,
+            "title": "In Control",
+            "type": "boolean"
+          },
+          "instrument_id": {
+            "title": "Instrument Id",
+            "type": "string"
+          },
+          "last_alarm_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Alarm At"
+          },
+          "statistic": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Statistic"
+          },
+          "version": {
+            "default": 0,
+            "title": "Version",
+            "type": "integer"
+          },
+          "window": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/WindowEntry"
+            },
+            "title": "Window",
+            "type": "array"
+          }
+        },
+        "required": [
+          "instrument_id",
+          "analyte_code",
+          "config_digest"
+        ],
+        "title": "PbrtqcState",
+        "type": "object"
+      },
+      "PolicyRecord": {
+        "description": "The policy decision that permitted a state change, kept with the record.",
+        "properties": {
+          "decision": {
+            "title": "Decision",
+            "type": "string"
+          },
+          "matched_rules": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Matched Rules",
+            "type": "array"
+          },
+          "policy_digest": {
+            "title": "Policy Digest",
+            "type": "string"
+          },
+          "policy_version": {
+            "title": "Policy Version",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision",
+          "matched_rules",
+          "policy_version",
+          "policy_digest",
+          "source"
+        ],
+        "title": "PolicyRecord",
+        "type": "object"
+      },
+      "PriorResult": {
+        "properties": {
+          "collected_at": {
+            "format": "date-time",
+            "title": "Collected At",
+            "type": "string"
+          },
+          "result_id": {
+            "title": "Result Id",
+            "type": "string"
+          },
+          "specimen_id": {
+            "title": "Specimen Id",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "result_id",
+          "value",
+          "collected_at",
+          "specimen_id"
+        ],
+        "title": "PriorResult",
+        "type": "object"
+      },
+      "Priority": {
+        "description": "Review priority; ``rank`` orders the pathologist queue.",
+        "enum": [
+          "stat",
+          "urgent",
+          "routine"
+        ],
+        "title": "Priority",
+        "type": "string"
+      },
+      "Proposal": {
+        "properties": {
+          "outcome": {
+            "$ref": "#/components/schemas/ReviewOutcome"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/PolicyRecord"
+          },
+          "proposed_at": {
+            "format": "date-time",
+            "title": "Proposed At",
+            "type": "string"
+          },
+          "proposed_by": {
+            "title": "Proposed By",
+            "type": "string"
+          },
+          "rationale": {
+            "title": "Rationale",
+            "type": "string"
+          },
+          "status": {
+            "default": "pending_human_approval",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "proposed_by",
+          "outcome",
+          "rationale",
+          "proposed_at",
+          "policy"
+        ],
+        "title": "Proposal",
+        "type": "object"
+      },
+      "ProposalRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "outcome": {
+            "$ref": "#/components/schemas/ReviewOutcome"
+          },
+          "rationale": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Rationale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "outcome",
+          "rationale"
+        ],
+        "title": "ProposalRequest",
+        "type": "object"
+      },
+      "QueueResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CaseSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "limit",
+          "offset"
+        ],
+        "title": "QueueResponse",
+        "type": "object"
+      },
+      "ReviewCase": {
+        "properties": {
+          "analyte_code": {
+            "title": "Analyte Code",
+            "type": "string"
+          },
+          "assigned_to": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned To"
+          },
+          "case_id": {
+            "title": "Case Id",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Decision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "due_at": {
+            "format": "date-time",
+            "title": "Due At",
+            "type": "string"
+          },
+          "escalated": {
+            "default": false,
+            "title": "Escalated",
+            "type": "boolean"
+          },
+          "evidence": {
+            "additionalProperties": true,
+            "description": "Evidence packet assembled at screening",
+            "title": "Evidence",
+            "type": "object"
+          },
+          "evidence_digest": {
+            "title": "Evidence Digest",
+            "type": "string"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/Finding"
+            },
+            "title": "Findings",
+            "type": "array"
+          },
+          "patient_id": {
+            "title": "Patient Id",
+            "type": "string"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/Priority"
+          },
+          "proposals": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/Proposal"
+            },
+            "title": "Proposals",
+            "type": "array"
+          },
+          "result_id": {
+            "title": "Result Id",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CaseStatus",
+            "default": "open"
+          },
+          "version": {
+            "default": 0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "case_id",
+          "result_id",
+          "patient_id",
+          "analyte_code",
+          "priority",
+          "created_at",
+          "due_at",
+          "findings",
+          "evidence",
+          "evidence_digest"
+        ],
+        "title": "ReviewCase",
+        "type": "object"
+      },
+      "ReviewOutcome": {
+        "enum": [
+          "confirm",
+          "confirm_with_comment",
+          "request_recollection",
+          "cancel_result"
+        ],
+        "title": "ReviewOutcome",
+        "type": "string"
+      },
+      "ScreenRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/LabResult"
+            },
+            "maxItems": 5000,
+            "minItems": 1,
+            "title": "Results",
+            "type": "array"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "title": "ScreenRequest",
+        "type": "object"
+      },
+      "ScreenResponse": {
+        "properties": {
+          "held_for_review": {
+            "title": "Held For Review",
+            "type": "integer"
+          },
+          "outcomes": {
+            "items": {
+              "$ref": "#/components/schemas/ScreeningOutcome"
+            },
+            "title": "Outcomes",
+            "type": "array"
+          },
+          "screened_no_findings": {
+            "title": "Screened No Findings",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "outcomes",
+          "held_for_review",
+          "screened_no_findings"
+        ],
+        "title": "ScreenResponse",
+        "type": "object"
+      },
+      "ScreeningOutcome": {
+        "properties": {
+          "analyte_code": {
+            "title": "Analyte Code",
+            "type": "string"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
+          "catalogue_digest": {
+            "title": "Catalogue Digest",
+            "type": "string"
+          },
+          "catalogue_version": {
+            "title": "Catalogue Version",
+            "type": "string"
+          },
+          "disposition": {
+            "$ref": "#/components/schemas/Disposition"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/Finding"
+            },
+            "title": "Findings",
+            "type": "array"
+          },
+          "flag": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Flag"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Priority"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "released_by_agent": {
+            "default": false,
+            "description": "Always false: agents never release or autoverify results",
+            "title": "Released By Agent",
+            "type": "boolean"
+          },
+          "result_id": {
+            "title": "Result Id",
+            "type": "string"
+          },
+          "screened_at": {
+            "format": "date-time",
+            "title": "Screened At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "result_id",
+          "analyte_code",
+          "disposition",
+          "flag",
+          "findings",
+          "priority",
+          "case_id",
+          "catalogue_version",
+          "catalogue_digest",
+          "screened_at"
+        ],
+        "title": "ScreeningOutcome",
+        "type": "object"
+      },
+      "SerumIndices": {
+        "additionalProperties": false,
+        "description": "HIL indices as reported by the analyzer, in the analyzer's index units.",
+        "properties": {
+          "hemolysis": {
+            "anyOf": [
+              {
+                "maximum": 100000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hemolysis"
+          },
+          "icterus": {
+            "anyOf": [
+              {
+                "maximum": 100000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icterus"
+          },
+          "lipemia": {
+            "anyOf": [
+              {
+                "maximum": 100000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lipemia"
+          }
+        },
+        "title": "SerumIndices",
+        "type": "object"
+      },
+      "Severity": {
+        "enum": [
+          "info",
+          "warning",
+          "high",
+          "critical"
+        ],
+        "title": "Severity",
+        "type": "string"
+      },
+      "Sex": {
+        "description": "Administrative sex used to select reference intervals (FHIR AdministrativeGender).",
+        "enum": [
+          "male",
+          "female",
+          "other",
+          "unknown"
+        ],
+        "title": "Sex",
+        "type": "string"
+      },
+      "StoredResult": {
+        "description": "A result together with its screening outcome and review state.",
+        "properties": {
+          "content_digest": {
+            "title": "Content Digest",
+            "type": "string"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScreeningOutcome"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "result": {
+            "$ref": "#/components/schemas/LabResult"
+          },
+          "review_outcome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Outcome"
+          }
+        },
+        "required": [
+          "result",
+          "content_digest"
+        ],
+        "title": "StoredResult",
+        "type": "object"
+      },
+      "TrendSummary": {
+        "description": "Least-squares trend over the patient's results inside the trend window.",
+        "properties": {
+          "direction": {
+            "title": "Direction",
+            "type": "string"
+          },
+          "first_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Value"
+          },
+          "last_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Value"
+          },
+          "points": {
+            "title": "Points",
+            "type": "integer"
+          },
+          "slope_per_day": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slope Per Day"
+          },
+          "window_hours": {
+            "title": "Window Hours",
+            "type": "number"
+          }
+        },
+        "required": [
+          "points",
+          "window_hours",
+          "slope_per_day",
+          "first_value",
+          "last_value",
+          "direction"
+        ],
+        "title": "TrendSummary",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "WindowEntry": {
+        "properties": {
+          "result_id": {
+            "title": "Result Id",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "result_id",
+          "value"
+        ],
+        "title": "WindowEntry",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Lab result integrity agents: delta checks, reference and critical ranges by age and sex, HIL interference, implausible combinations, patient-based real-time QC, evidence packets and a pathologist review queue. Agents never release or autoverify results.",
+    "title": "Lab Result Integrity",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/.well-known/agent-card.json": {
+      "get": {
+        "operationId": "card__well_known_agent_card_json_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Card  Well Known Agent Card Json Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Card",
+        "tags": [
+          "a2a"
+        ]
+      }
+    },
+    "/a2a": {
+      "post": {
+        "description": "A2A JSON-RPC 2.0 endpoint (``message/send``).",
+        "operationId": "a2a_a2a_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "A2A",
+        "tags": [
+          "a2a"
+        ]
+      }
+    },
+    "/v1/audit/verify": {
+      "post": {
+        "operationId": "verify_audit_v1_audit_verify_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditVerification"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Verify Audit",
+        "tags": [
+          "audit"
+        ]
+      }
+    },
+    "/v1/cases/{case_id}": {
+      "get": {
+        "operationId": "get_case_v1_cases__case_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[0-9a-f]{32}$",
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewCase"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Case",
+        "tags": [
+          "review"
+        ]
+      }
+    },
+    "/v1/cases/{case_id}/claim": {
+      "post": {
+        "operationId": "claim_case_v1_cases__case_id__claim_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[0-9a-f]{32}$",
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewCase"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Claim Case",
+        "tags": [
+          "review"
+        ]
+      }
+    },
+    "/v1/cases/{case_id}/decision": {
+      "post": {
+        "description": "Pathologist decision. Humans only; the decision is bound to the evidence digest.",
+        "operationId": "decide_case_v1_cases__case_id__decision_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[0-9a-f]{32}$",
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewCase"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Decide Case",
+        "tags": [
+          "review"
+        ]
+      }
+    },
+    "/v1/cases/{case_id}/proposals": {
+      "post": {
+        "description": "Agent proposal; recorded as pending human approval and never changes the case state.",
+        "operationId": "propose_v1_cases__case_id__proposals_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[0-9a-f]{32}$",
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewCase"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Propose",
+        "tags": [
+          "review"
+        ]
+      }
+    },
+    "/v1/catalogue": {
+      "get": {
+        "operationId": "catalogue_v1_catalogue_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Catalogue V1 Catalogue Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Catalogue",
+        "tags": [
+          "quality-control"
+        ]
+      }
+    },
+    "/v1/patients/{patient_id}/analytes/{analyte_code}/trend": {
+      "get": {
+        "operationId": "patient_trend_v1_patients__patient_id__analytes__analyte_code__trend_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "patient_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:\\-]{0,127}$",
+              "title": "Patient Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "analyte_code",
+            "required": true,
+            "schema": {
+              "pattern": "^[0-9]{1,7}-[0-9]$",
+              "title": "Analyte Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientTrend"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Patient Trend",
+        "tags": [
+          "screening"
+        ]
+      }
+    },
+    "/v1/qc/pbrtqc": {
+      "get": {
+        "operationId": "pbrtqc_v1_qc_pbrtqc_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PbrtqcResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Pbrtqc",
+        "tags": [
+          "quality-control"
+        ]
+      }
+    },
+    "/v1/results/{result_id}": {
+      "get": {
+        "operationId": "get_result_v1_results__result_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "result_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:\\-]{0,127}$",
+              "title": "Result Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoredResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Result",
+        "tags": [
+          "screening"
+        ]
+      }
+    },
+    "/v1/review-queue": {
+      "get": {
+        "operationId": "review_queue_v1_review_queue_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/components/schemas/CaseStatus"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "maximum": 100000,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueueResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Review Queue",
+        "tags": [
+          "review"
+        ]
+      }
+    },
+    "/v1/screenings": {
+      "post": {
+        "description": "Screen a batch of results. Never releases or autoverifies; returns holds and cases.",
+        "operationId": "screen_v1_screenings_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScreenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Screen",
+        "tags": [
+          "screening"
+        ]
+      }
+    }
+  }
+}

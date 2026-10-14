@@ -1,0 +1,125 @@
+{{- /*
+StatefulSet so each replica owns a persistent volume for its own signed
+audit chain (/var/lib/lab-result-integrity/audit/<pod>.jsonl). A log shipper
+copies the files to retention-locked object storage provisioned by Terraform.
+Results, cases and patient-based QC state live in PostgreSQL and are shared.
+*/ -}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "lri.fullname" . }}
+  labels: {{- include "lri.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "lri.fullname" . }}-headless
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels: {{- include "lri.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "lri.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}{{ toYaml . | nindent 8 }}{{ end }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- range . }}
+        - {{- toYaml . | nindent 10 }}
+          labelSelector:
+            matchLabels: {{- include "lri.selectorLabels" $ | nindent 14 }}
+        {{- end }}
+      {{- end }}
+      containers:
+        - name: lab-result-integrity
+          image: {{ include "lri.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: {{ include "lri.fullname" . }}
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: LRI_AUDIT_LOG_PATH
+              value: /var/lib/lab-result-integrity/audit/$(POD_NAME).jsonl
+            - name: LRI_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.database }}
+                  key: DATABASE_URL
+            - name: LRI_FORWARDED_ALLOW_IPS
+              value: "*"
+          readinessProbe:
+            httpGet: {path: /readyz, port: http}
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 20
+            failureThreshold: 3
+          startupProbe:
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 5
+            failureThreshold: 24
+          resources: {{- toYaml .Values.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: catalogue
+              mountPath: /etc/lab-result-integrity/catalogue
+              readOnly: true
+            - name: audit-key
+              mountPath: /etc/lab-result-integrity/audit-key
+              readOnly: true
+            - name: audit
+              mountPath: /var/lib/lab-result-integrity/audit
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: catalogue
+          configMap:
+            name: {{ include "lri.fullname" . }}-catalogue
+        - name: audit-key
+          secret:
+            secretName: {{ .Values.secrets.auditKey }}
+            defaultMode: 0400
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi
+      {{- with .Values.nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+      {{- end }}
+  volumeClaimTemplates:
+    - metadata:
+        name: audit
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        {{- with .Values.audit.storageClassName }}
+        storageClassName: {{ . }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.audit.size }}

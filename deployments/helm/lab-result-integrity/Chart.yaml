@@ -1,0 +1,13 @@
+apiVersion: v2
+name: lab-result-integrity
+description: Lab result integrity agents with a pathologist review queue; never autoverifies results
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+kubeVersion: ">=1.27.0-0"
+home: https://github.com/kogunlowo123/lab-result-integrity
+sources:
+  - https://github.com/kogunlowo123/lab-result-integrity
+maintainers:
+  - name: kogunlowo123
+    url: https://github.com/kogunlowo123

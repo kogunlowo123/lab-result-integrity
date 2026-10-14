@@ -1,0 +1,186 @@
+{
+  "$defs": {
+    "Disposition": {
+      "description": "What screening concluded. Neither value releases the result.\n\n``screened_no_findings`` tells the LIS that no integrity rule fired; release\nstays with the laboratory's own validated autoverification rules or a\nhuman. ``held_for_review`` places the result in the pathologist queue.",
+      "enum": [
+        "screened_no_findings",
+        "held_for_review"
+      ],
+      "title": "Disposition",
+      "type": "string"
+    },
+    "Finding": {
+      "description": "A rule outcome with the evidence that produced it and the citation behind the rule.",
+      "properties": {
+        "citations": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "evidence": {
+          "additionalProperties": true,
+          "title": "Evidence",
+          "type": "object"
+        },
+        "kind": {
+          "$ref": "#/$defs/FindingKind"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "rule_id": {
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity"
+        }
+      },
+      "required": [
+        "kind",
+        "severity",
+        "rule_id",
+        "message"
+      ],
+      "title": "Finding",
+      "type": "object"
+    },
+    "FindingKind": {
+      "enum": [
+        "not_in_catalogue",
+        "unit_mismatch",
+        "reference_range",
+        "critical_value",
+        "plausibility_limit",
+        "delta_check",
+        "hil_interference",
+        "implausible_combination",
+        "pbrtqc_alarm"
+      ],
+      "title": "FindingKind",
+      "type": "string"
+    },
+    "Flag": {
+      "description": "Abnormal flags in HL7 v2 OBX-8 vocabulary.",
+      "enum": [
+        "N",
+        "L",
+        "H",
+        "LL",
+        "HH"
+      ],
+      "title": "Flag",
+      "type": "string"
+    },
+    "Priority": {
+      "description": "Review priority; ``rank`` orders the pathologist queue.",
+      "enum": [
+        "stat",
+        "urgent",
+        "routine"
+      ],
+      "title": "Priority",
+      "type": "string"
+    },
+    "Severity": {
+      "enum": [
+        "info",
+        "warning",
+        "high",
+        "critical"
+      ],
+      "title": "Severity",
+      "type": "string"
+    }
+  },
+  "$id": "https://github.com/kogunlowo123/lab-result-integrity/schemas/screening-outcome.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "analyte_code": {
+      "title": "Analyte Code",
+      "type": "string"
+    },
+    "case_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Case Id"
+    },
+    "catalogue_digest": {
+      "title": "Catalogue Digest",
+      "type": "string"
+    },
+    "catalogue_version": {
+      "title": "Catalogue Version",
+      "type": "string"
+    },
+    "disposition": {
+      "$ref": "#/$defs/Disposition"
+    },
+    "findings": {
+      "items": {
+        "$ref": "#/$defs/Finding"
+      },
+      "title": "Findings",
+      "type": "array"
+    },
+    "flag": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Flag"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "priority": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Priority"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "released_by_agent": {
+      "default": false,
+      "description": "Always false: agents never release or autoverify results",
+      "title": "Released By Agent",
+      "type": "boolean"
+    },
+    "result_id": {
+      "title": "Result Id",
+      "type": "string"
+    },
+    "screened_at": {
+      "format": "date-time",
+      "title": "Screened At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "result_id",
+    "analyte_code",
+    "disposition",
+    "flag",
+    "findings",
+    "priority",
+    "case_id",
+    "catalogue_version",
+    "catalogue_digest",
+    "screened_at"
+  ],
+  "title": "ScreeningOutcome",
+  "type": "object"
+}

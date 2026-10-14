@@ -1,0 +1,44 @@
+# Values used by CI to render and schema-validate the chart (helm lint,
+# helm template | kubeconform). They describe a complete, valid deployment
+# with a minimal approved catalogue for rendering only.
+lri:
+  publicUrl: https://lri.lab.ci.internal
+  oidc:
+    issuer: https://login.ci.internal/lab
+    audience: lab-result-integrity
+    jwksUrl: https://login.ci.internal/lab/jwks
+  fabricUrl: https://identity.agents.ci.internal
+  narrative:
+    enabled: true
+    modelGatewayUrl: http://model-gateway.ai-platform.svc.cluster.local:8080
+    model: narrative-ci
+  catalogue: |
+    governance:
+      catalogue_id: lab-ci
+      version: "ci-1"
+      status: approved
+      approved_by: CI Laboratory Director
+      approved_on: 2026-10-01
+      statement: Rendering fixture for chart validation.
+    sources:
+      lab-policy: Laboratory policy (CI fixture).
+    review_policy:
+      cite: [lab-policy]
+      sla_minutes: {stat: 30, urgent: 120, routine: 480}
+    analytes:
+      - code: 2823-3
+        name: Potassium
+        unit: mmol/L
+        reference_intervals:
+          - {sex: any, low: 3.5, high: 5.1, cite: [lab-policy]}
+        plausible: {min: 1.0, max: 12.0, cite: [lab-policy]}
+secrets:
+  auditKeyFile: audit-2026-10.pem
+networkPolicy:
+  extraEgressPorts: [8080]
+ingress:
+  enabled: true
+  className: nginx
+  host: lri.lab.ci.internal
+serviceMonitor:
+  enabled: true

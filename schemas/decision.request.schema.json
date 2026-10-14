@@ -1,0 +1,40 @@
+{
+  "$defs": {
+    "ReviewOutcome": {
+      "enum": [
+        "confirm",
+        "confirm_with_comment",
+        "request_recollection",
+        "cancel_result"
+      ],
+      "title": "ReviewOutcome",
+      "type": "string"
+    }
+  },
+  "$id": "https://github.com/kogunlowo123/lab-result-integrity/schemas/decision.request.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "comment": {
+      "anyOf": [
+        {
+          "maxLength": 4000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Comment"
+    },
+    "outcome": {
+      "$ref": "#/$defs/ReviewOutcome"
+    }
+  },
+  "required": [
+    "outcome"
+  ],
+  "title": "DecisionRequest",
+  "type": "object"
+}

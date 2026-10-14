@@ -1,0 +1,39 @@
+{{- $l := .Values.lri -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "lri.fullname" . }}
+  labels: {{- include "lri.labels" . | nindent 4 }}
+data:
+  LRI_ENVIRONMENT: {{ $l.environment | quote }}
+  LRI_PUBLIC_URL: {{ required "lri.publicUrl is required" $l.publicUrl | quote }}
+  LRI_OIDC_ISSUER: {{ required "lri.oidc.issuer is required" $l.oidc.issuer | quote }}
+  LRI_OIDC_AUDIENCE: {{ required "lri.oidc.audience is required" $l.oidc.audience | quote }}
+  LRI_OIDC_JWKS_URL: {{ required "lri.oidc.jwksUrl is required" $l.oidc.jwksUrl | quote }}
+  LRI_ROLES_CLAIM: {{ $l.oidc.rolesClaim | quote }}
+  LRI_AGENT_CLAIM: {{ $l.oidc.agentClaim | quote }}
+  LRI_AGENT_CLAIM_VALUE: {{ $l.oidc.agentClaimValue | quote }}
+  LRI_CATALOGUE_FILE: /etc/lab-result-integrity/catalogue/analytes.yaml
+  LRI_AUDIT_KEY_FILE: {{ printf "/etc/lab-result-integrity/audit-key/%s" (required "secrets.auditKeyFile is required" .Values.secrets.auditKeyFile) | quote }}
+  LRI_MAX_BATCH: {{ $l.maxBatch | quote }}
+  LRI_SLA_SWEEP_INTERVAL_S: {{ $l.slaSweepIntervalSeconds | quote }}
+  LRI_LOG_LEVEL: {{ $l.logLevel | quote }}
+  {{- with $l.fabricUrl }}
+  LRI_FABRIC_URL: {{ . | quote }}
+  {{- end }}
+  {{- if $l.narrative.enabled }}
+  LRI_PROVIDERS_FILE: /app/configs/providers.yaml
+  LRI_MODEL_GATEWAY_URL: {{ required "lri.narrative.modelGatewayUrl is required when narrative is enabled" $l.narrative.modelGatewayUrl | quote }}
+  LRI_NARRATIVE_MODEL: {{ required "lri.narrative.model is required when narrative is enabled" $l.narrative.model | quote }}
+  {{- end }}
+  {{- with $l.otlpEndpoint }}
+  LRI_OTLP_ENDPOINT: {{ . | quote }}
+  {{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "lri.fullname" . }}-catalogue
+  labels: {{- include "lri.labels" . | nindent 4 }}
+data:
+  analytes.yaml: {{ required "lri.catalogue (approved analyte catalogue YAML) is required" $l.catalogue | quote }}
