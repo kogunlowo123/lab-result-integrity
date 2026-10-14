@@ -104,8 +104,9 @@ def make_engine(url: str) -> AsyncEngine:
 
 def _sqlite_pragmas(dbapi_connection: Any, _record: Any) -> None:
     cursor = dbapi_connection.cursor()
-    for pragma in ("journal_mode=WAL", "synchronous=NORMAL", "busy_timeout=5000"):
-        cursor.execute(f"PRAGMA {pragma}")
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.execute("PRAGMA synchronous=NORMAL")
+    cursor.execute("PRAGMA busy_timeout=5000")
     cursor.close()
 
 
